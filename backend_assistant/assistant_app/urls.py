@@ -1,12 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UsuarioViewSet, TareaViewSet, api_overview
+from .views import UsuarioViewSet, TareaViewSet, usuario_tarea, lenguaje_natural, api_overview
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
 router.register(r'tareas', TareaViewSet)
 
 urlpatterns = [
-    path('', api_overview, name='api-overview'),
+    path('prueba/', api_overview, name='api-overview'),
     path('', include(router.urls)),
+    path('usuarios-tareas/', usuario_tarea, name='usuarios_tareas'),
+    path('front/', lenguaje_natural, name='coneccion_directa')
 ]

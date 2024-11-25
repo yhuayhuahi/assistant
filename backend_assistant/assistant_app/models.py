@@ -3,9 +3,9 @@ from django.db import models
 # Create your models here.
 
 class Usuario(models.Model):
-    id_audio = models.FileField(upload_to='audios_usuarios/', help_text="Archivo de audio identificador del usuario")
     nombre = models.CharField(max_length=100, help_text="Nombre del usuario")
     email = models.EmailField(blank=True, null=True, help_text="Correo electrónico opcional")
+    audio = models.FileField(upload_to='audios_usuarios/', null=True, blank=True)
 
     def __str__(self):
         return self.nombre
