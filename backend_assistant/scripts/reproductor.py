@@ -39,7 +39,7 @@ def play_song_in_browser(music):
     play_in_brave(music_url)
 
     # Espera unos segundos para asegurarte de que el navegador abre
-    time.sleep(1/2)
+    time.sleep(1)
 
     # Minimiza la ventana del navegador
     minimize_window()
