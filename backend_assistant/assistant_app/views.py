@@ -193,19 +193,107 @@ def lenguaje_natural(request):
         # Lógica para manejar la respuesta
         client = APIClient()
         if accion == 'guardar tarea' and fecha:
-            response = client.post('/api/tareas/', {'usuario':1, 'nombre': contenido, 'fecha_planificada': fecha})
-            
+            # Crear una tarea mediante la API
+            response = client.post('/api/tareas/', {'usuario': 1, 'nombre': contenido, 'fecha_planificada': fecha})
+            response_data = response.json()  # Convertir la respuesta a JSON
+
             try:
-                return response
+                # Obtener los datos de la tarea creada
+                nombre = response_data.get('nombre', 'Sin nombre')
+                fecha_planificada = response_data.get('fecha_planificada', 'Sin fecha')
+
+                # Crear el contexto para Cohere
+                contexto = {
+                    "role": "user",
+                    "content": (
+                        "Eres un asistente virtual. Quiero que leas lo siguiente y lo pongas en una forma que pueda leer un asistente de voz\n"
+                        f"La tarea es {nombre} - {fecha_planificada}.\n"
+                    )
+                }
+
+                # Llamar al modelo Cohere con el mensaje
+                response2 = co.chat(
+                    model="command-r-plus",
+                    messages=[contexto]
+                )
+
+                # Extraer contenido de la respuesta de Cohere
+                contenido_generado = "\n".join([item.text for item in response2.message.content])  # Ajusta según la estructura de `response2`
+
+                # Responder al cliente
+                return JsonResponse({'message': contenido_generado, 'accion': accion}, status=200)
+            except AttributeError as e:
+                return JsonResponse({'error': f"Atributo no encontrado: {str(e)}"}, status=500)
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=500)
         
         elif accion == 'mostrar tareas':
+            # Obtener tareas de la API
             response = client.get('/api/tareas/')
+            response_data = response.json()  # Convertir a JSON
+
+            # Formatear tareas
+            formato = "\n".join([
+                f"{tarea.get('nombre', 'Sin nombre')} - {tarea.get('fecha_planificada', 'Sin fecha')}"
+                for tarea in response_data
+            ])
+
+            # Crear el contexto para el modelo
+            contexto = {
+                "role": "user",
+                "content": (
+                    "Eres un asistente virtual. Quiero que leas lo siguiente y lo pongas en una forma que pueda leer un asistente de voz:\n"
+                    f"Tareas pendientes:\n{formato}\n"
+                )
+            }
+
+            # Llamar al modelo Cohere con el mensaje
+            response2 = co.chat(
+                model="command-r-plus",
+                messages=[contexto]
+            )
+
+            # Acceder correctamente al texto generado por Cohere
             try:
-                return response
+                mensaje_generado = response2.message.content[0].text  # Usa el atributo correcto según la documentación de Cohere
+                return JsonResponse({'message': mensaje_generado, 'accion': accion}, status=200)
+            except AttributeError as e:
+                return JsonResponse({'error': f"Atributo no encontrado: {str(e)}"}, status=500)
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=500)
+        
+        elif accion == 'eliminar tarea':
+            # Eliminar una tarea
+            # Obtener tareas de la API
+            response = client.get('/api/tareas/')
+            response_data = response.json()  # Convertir a JSON
+
+            # Formatear tareas
+            formato = "\n".join([
+                f"{tarea.get('id')} - {tarea.get('nombre', 'Sin nombre')} - {tarea.get('fecha_planificada', 'Sin fecha')}"
+                for tarea in response_data
+            ])
+
+            # Crear el contexto para el modelo
+            contexto = {
+                "role": "user",
+                "content": (
+                    f"Quiero que reconozcas si {contenido}, se refiere a una de estas tareas:\n"
+                    f"Tareas pendientes:\n{formato}\n"
+                    "En caso de que sea una de ellas, retorna su id para eliminarla.\n"
+                )
+            }
+
+            # Llamar al modelo Cohere con el mensaje
+            response2 = co.chat(
+                model="command-r-plus",
+                messages=[contexto]
+            )
+            
+            id = int(response2.message.content[0].text)
+            
+            response = client.delete(f'/api/tareas/{id}/')
+            return JsonResponse({'message': 'Tarea eliminada con exito', 'accion': accion}, status=200)
         
         else:
             # Si no es una tarea, simplemente devolvemos la acción y el contenido
