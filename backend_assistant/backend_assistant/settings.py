@@ -85,8 +85,9 @@ DATABASES = {
 }
 
 # Cors allowed
-CORS_ALLOWED_ORIGINS_ALL = True # Me lo puedo permitir porque es un proyecto de prueba
-
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # o la URL de tu frontend
+]
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
