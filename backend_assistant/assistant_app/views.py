@@ -15,7 +15,7 @@ from .models import Usuario, Tarea
 from .serializers import UsuarioSerializer, TareaSerializer
 
 # Coneccion con cohere.ai
-from scripts.general import API_KEY
+from scripts.general import API_KEY, COMANDOS
 from cohere import ClientV2
 
 class UsuarioViewSet(ModelViewSet):

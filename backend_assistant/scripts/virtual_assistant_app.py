@@ -2,6 +2,7 @@
 
 from reproductor import play_song_in_browser
 from ubicacion_temporal import tiempo
+from apps import ejecutar_comando
 
 import pywhatkit
 import wikipedia
@@ -38,6 +39,12 @@ def run(recognizer = 'busca en google animales'):
     elif 'chiste' in recognizer:
         chiste = chistes.get_random_chiste()
         return (chiste)
+    
+    # ABRIR APPS
+    elif 'abre la app' in recognizer:
+        app = recognizer.replace('abre la app', 'abre')
+        ejecutar_comando(recognizer)
+        return ('Abriendo ' + app)
 
     else:
-        return('Disculpa, no te entiendo')
+        return('Disculpa, no puedo realizar esa acción')
