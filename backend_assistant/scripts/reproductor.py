@@ -4,7 +4,7 @@ import webbrowser
 import pygetwindow as gw
 import time
 
-PATH = 'C:\\Users\\YOURDYY\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'
+PATH = 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'
 
 # Función para buscar y obtener el enlace del primer resultado
 def get_first_youtube_result(query):
