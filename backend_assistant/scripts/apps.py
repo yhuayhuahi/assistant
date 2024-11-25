@@ -1,6 +1,6 @@
 import os
 
-from general import API_KEY
+from .general import API_KEY
 from cohere import ClientV2
 
 # Diccionario con el nombre de la aplicación y la ruta de su ejecutable

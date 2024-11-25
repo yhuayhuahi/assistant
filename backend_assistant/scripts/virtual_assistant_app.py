@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from reproductor import play_song_in_browser
-from ubicacion_temporal import tiempo
-from apps import ejecutar_comando
+from .reproductor import play_song_in_browser
+from .ubicacion_temporal import tiempo
+from .apps import ejecutar_comando
 
 import pywhatkit
 import wikipedia
@@ -41,7 +41,7 @@ def run(recognizer = 'busca en google animales'):
         return (chiste)
     
     # ABRIR APPS
-    elif 'abre la app' in recognizer:
+    elif 'abre la aplicacion' in recognizer:
         app = recognizer.replace('abre la app', 'abre')
         ejecutar_comando(recognizer)
         return ('Abriendo ' + app)

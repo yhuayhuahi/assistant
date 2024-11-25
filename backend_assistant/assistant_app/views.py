@@ -9,6 +9,7 @@ import json
 # Create your views here.
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from rest_framework.viewsets import ModelViewSet
 from .models import Usuario, Tarea
@@ -16,7 +17,11 @@ from .serializers import UsuarioSerializer, TareaSerializer
 
 # Coneccion con cohere.ai
 from scripts.general import API_KEY, COMANDOS
+from scripts.virtual_assistant_app import run
 from cohere import ClientV2
+
+import re
+from dateutil import parser
 
 class UsuarioViewSet(ModelViewSet):
     queryset = Usuario.objects.all()
@@ -149,21 +154,63 @@ def lenguaje_natural(request):
         co = ClientV2(API_KEY)
         
         # Crear el mensaje de entrada para el modelo
-        mensaje = {
+        contexto = {
             "role": "user",
-            "content": mensaje_usuario
+            "content": (
+                "Eres un asistente virtual que puede realizar acciones de acuerdo a los comando que te mostrare, si algo coincide con algún comando no dudes, en caso de que no se pueda, hay respuestas en otra parte del código\n"
+                f"Tengo una lista de comandos disponibles:\n{', '.join(COMANDOS)}.\n"
+                f"El usuario dice: '{mensaje_usuario}'.\n"
+                "Identifica lo que el usuario quiere y devuelve lo siguiente:\n"
+                "- Si coincide con un comando, responde con {'accion': '<comando>', 'contenido': '<mensaje>'}.\n"
+                "- Si lo que quiere no coincide con un comando, indica {'accion': 'self', 'contenido': '<mensaje>'}.\n"
+                "- Si el usuario quiere guardar una tarea, responde con {'accion': 'guardar tarea', 'contenido': '<nombre de la tarea>', 'fecha': 'AAAA-MM-DD'}.\n"
+            )
         }
-        
+
         # Llamar al modelo Cohere con el mensaje
         response = co.chat(
             model="command-r-plus",
-            messages=[mensaje]
+            messages=[contexto]
         )
         
         # Extraer y limpiar la respuesta del modelo
-        respuesta = response.message.content[0].text
+        respuesta = response.message.content[0].text.strip()
+        print(respuesta)
+
+        # Usar una expresión regular para extraer los atributos 'accion' y 'contenido' (y 'fecha' si es necesario)
+        pattern = r"'\s*accion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'(?:\s*,\s*'fecha'\s*:\s*'([^']+)')?"
+
+        match = re.search(pattern, respuesta)
+
+        if not match:
+            return JsonResponse({'error': 'No se pudo extraer la información necesaria de la respuesta'}, status=500)
+
+        # Obtener los valores de los grupos
+        accion = match.group(1)
+        contenido = match.group(2)
+        fecha = match.group(3) if match.group(3) else None  # Si 'fecha' no está presente, lo dejamos como None
+
+        # Lógica para manejar la respuesta
+        client = APIClient()
+        if accion == 'guardar tarea' and fecha:
+            response = client.post('/api/tareas/', {'usuario':1, 'nombre': contenido, 'fecha_planificada': fecha})
+            
+            try:
+                return response
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
         
-        return JsonResponse({'respuesta': respuesta}, status=200)
+        elif accion == 'mostrar tareas':
+            response = client.get('/api/tareas/')
+            try:
+                return response
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+        
+        else:
+            # Si no es una tarea, simplemente devolvemos la acción y el contenido
+            respuesta = run(accion + ' ' + contenido)
+            return JsonResponse({'message': respuesta, 'accion': accion}, status=200)
     
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Error en el formato JSON'}, status=400)
