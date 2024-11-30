@@ -4,7 +4,7 @@ import webbrowser
 import pygetwindow as gw
 import time
 
-PATH = 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'
+PATH = 'C:\\Users\\YOURDYY\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'
 
 # Función para buscar y obtener el enlace del primer resultado
 def get_first_youtube_result(query):
@@ -39,7 +39,7 @@ def play_song_in_browser(music):
     play_in_brave(music_url)
 
     # Espera unos segundos para asegurarte de que el navegador abre
-    time.sleep(1)
+    time.sleep(2)
 
     # Minimiza la ventana del navegador
     minimize_window()

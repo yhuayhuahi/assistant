@@ -12,7 +12,7 @@ import chistesESP as chistes
 wikipedia.set_lang('es')
 
 # Metodo que ejecuta al asistente
-def run(recognizer = 'busca en google animales'):
+def run(recognizer):
 
     # REPRODUCE UN VIDEO EN YOUTUBE
     if 'reproduce' in recognizer:

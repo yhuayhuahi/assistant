@@ -157,13 +157,14 @@ def lenguaje_natural(request):
         contexto = {
             "role": "user",
             "content": (
-                "Eres un asistente virtual que puede realizar acciones de acuerdo a los comando que te mostrare, si algo coincide con algún comando no dudes, en caso de que no se pueda, hay respuestas en otra parte del código\n"
+                "Eres un asistente virtual que puede realizar acciones de acuerdo a los comando que te mostrare, si algo coincide con algún comando no dudes, en caso de que no se pueda, puedes mandarle un mensaje de tu parte\n"
                 f"Tengo una lista de comandos disponibles:\n{', '.join(COMANDOS)}.\n"
                 f"El usuario dice: '{mensaje_usuario}'.\n"
                 "Identifica lo que el usuario quiere y devuelve lo siguiente:\n"
                 "- Si coincide con un comando, responde con {'accion': '<comando>', 'contenido': '<mensaje>'}.\n"
-                "- Si lo que quiere no coincide con un comando, indica {'accion': 'self', 'contenido': '<mensaje>'}.\n"
+                "- Si lo que quiere no coincide con un comando, talvez quiere algo que tu puedes hacer como dar informacion de algo en ese caso: {'accion': 'self', 'contenido': '<mensaje>'}.\n"
                 "- Si el usuario quiere guardar una tarea, responde con {'accion': 'guardar tarea', 'contenido': '<nombre de la tarea>', 'fecha': 'AAAA-MM-DD'}.\n"
+                "- Si no mensionan año asume el año 2024.\n"
             )
         }
 
@@ -178,7 +179,7 @@ def lenguaje_natural(request):
         print(respuesta)
 
         # Usar una expresión regular para extraer los atributos 'accion' y 'contenido' (y 'fecha' si es necesario)
-        pattern = r"'\s*accion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'(?:\s*,\s*'fecha'\s*:\s*'([^']+)')?"
+        pattern = r"'\s*[aá]ccion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'(?:\s*,\s*'fecha'\s*:\s*'([^']+)')?"
 
         match = re.search(pattern, respuesta)
 
@@ -206,7 +207,7 @@ def lenguaje_natural(request):
                 contexto = {
                     "role": "user",
                     "content": (
-                        "Eres un asistente virtual. Quiero que leas lo siguiente y lo pongas en una forma que pueda leer un asistente de voz\n"
+                        "Eres un asistente virtual. debes estructurar la siguiente tarea recien creada o añadida \n"
                         f"La tarea es {nombre} - {fecha_planificada}.\n"
                     )
                 }
@@ -242,7 +243,7 @@ def lenguaje_natural(request):
             contexto = {
                 "role": "user",
                 "content": (
-                    "Eres un asistente virtual. Quiero que leas lo siguiente y lo pongas en una forma que pueda leer un asistente de voz:\n"
+                    "Eres un asistente virtual. Debes estructurar las tareas pendientes\n"
                     f"Tareas pendientes:\n{formato}\n"
                 )
             }
@@ -305,8 +306,42 @@ def lenguaje_natural(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@api_view(['POST'])
+def chat_psycology(request):
+    # Parsear el cuerpo de la solicitud
+    body = json.loads(request.body)
+    mensaje_usuario = body.get('mensaje')
 
-@api_view(['GET'])
+    if not mensaje_usuario:
+        return JsonResponse({'error': 'Mensaje no proporcionado'}, status=400)
+    
+    # Inicializar cliente de Cohere
+    co = ClientV2(API_KEY)
+    
+    contexto = "Eres un asistente virtual de ayuda psycologica, responde como veas conveniente a las siguientes interacciones"
+    
+    response = co.chat(
+        model = "command-r-plus",
+        messages = [
+            {
+                "role": "user",
+                "content": contexto
+            },
+            {
+                "role": "assistant",
+                "content": "Entendido!"
+            },
+            {
+                "role": "user",
+                "content": mensaje_usuario
+            }
+        ]
+    )
+    respuesta = response.message.content[0].text
+    
+    return JsonResponse({"message": respuesta}, status=200)
+        
+@api_view(['GET', 'POST'])
 def api_overview(request):
-    return Response({"message": "Bienvenido a la API del asistente virtual"})
+    return JsonResponse({"message": "Bienvenido a la API del asistente virtual, este es una ruta de prueba, para ver como se tipea la respuesta en la interfaz en nuestro frontend :3, continua diseñando"}, status=200)
 
