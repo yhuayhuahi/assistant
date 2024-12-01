@@ -22,9 +22,11 @@ body {
   width: 90%;
   text-align: center;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
 }
 
-/* Adding some floating shapes */
 #app::before, #app::after {
   content: "";
   position: absolute;
@@ -68,6 +70,7 @@ button {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border: 2px solid red;
 }
 
 button:hover {
@@ -75,6 +78,7 @@ button:hover {
   transform: scale(1.1);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
+
 
 /* Text Messages */
 p {
@@ -88,7 +92,7 @@ p {
 body::before {
   content: "";
   position: absolute;
-  background: url('./assets/background1.jpg') no-repeat center/cover;
+  background: none;
   top: 0;
   left: 0;
   width: 100%;
