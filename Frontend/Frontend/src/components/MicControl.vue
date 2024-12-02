@@ -20,7 +20,7 @@
   </template>
   
   <script>
-  import axios from 'axios'; // Asegúrate de importar axios
+  import axios from 'axios';
   
   export default {
     data() {

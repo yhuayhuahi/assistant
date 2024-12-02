@@ -33,8 +33,8 @@ export default {
       respuesta: '', // Respuesta del asistente
       reconocimiento: null, // Instancia de reconocimiento de voz
       micStatus: 'Micrófono apagado', // Estado del micrófono
-      isMicOn: false, // Estado del micrófono (encendido/apagado)
-      isSpeaking: false, // Flag para saber si el asistente está hablando
+      isMicOn: false, // Estado del micrófono (encendido o apagado)
+      isSpeaking: false, // Variable para saber si el asistente está hablando
     };
   },
   methods: {
@@ -53,7 +53,7 @@ export default {
       this.reconocimiento = new webkitSpeechRecognition();
       this.reconocimiento.continuous = true;  // Mantener el micrófono encendido
       this.reconocimiento.lang = 'es-ES';
-      this.reconocimiento.interimResults = false;  // No mostrar resultados intermedios
+      this.reconocimiento.interimResults = false;
       this.reconocimiento.onresult = (event) => {
         const texto = event.results[0][0].transcript;
         this.mensajeCapturado = texto;  // Mostrar el mensaje capturado
@@ -113,47 +113,42 @@ export default {
 
     // Función para hablar el texto con la síntesis de voz
     hablar(texto) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();  // Cancelar cualquier síntesis anterior
+  if ("speechSynthesis" in window) {
+    // Cancelamos cualquier síntesis de voz en curso
+    window.speechSynthesis.cancel();
 
-        const fragmentos = this.dividirTextoEnFragmentos(texto);
+    // Dividimos el texto en fragmentos más pequeños
+    const maxLength = 200;
+    const speechArray = texto.match(new RegExp(`.{1,${maxLength}}`, "g")) || [texto];
 
-        this.isSpeaking = true;
+    let index = 0;
 
-        fragmentos.forEach((fragmento, index) => {
-          const utterance = new SpeechSynthesisUtterance(fragmento);
-          utterance.lang = 'es-ES';
-          utterance.pitch = 1;
-          utterance.rate = 0.9;
-          utterance.volume = 1;
+    const speakNext = () => {
+      if (index < speechArray.length) {
+        const speech = new SpeechSynthesisUtterance(speechArray[index]);
+        speech.lang = "es-ES";
+        speech.pitch = 1;
+        speech.rate = 0.9;
+        speech.volume = 1;
 
-          // Evento cuando termina de hablar
-          utterance.onend = () => {
-            if (index === fragmentos.length - 1) {
-              console.log('Síntesis de voz completada.');
-              this.isSpeaking = false;  // Ya terminó de hablar
-            }
-          };
+        speech.onend = () => {
+          index++;
+          speakNext(); // Hablar el siguiente fragmento
+        };
 
-          // Manejo de errores
-          utterance.onerror = (e) => {
-            console.error('Error en síntesis de voz:', e.error);
-            this.isSpeaking = false;
-          };
+        speech.onerror = (e) => {
+          console.error("Error en síntesis:", e);
+        };
 
-          window.speechSynthesis.speak(utterance);
-        });
-      } else {
-        console.warn('Tu navegador no soporta síntesis de voz.');
+        window.speechSynthesis.speak(speech);
       }
-    },
+    };
 
-    // Dividir texto largo en fragmentos más pequeños
-    dividirTextoEnFragmentos(texto) {
-      const longitudMaxima = 200;
-      return texto.match(new RegExp(`.{1,${longitudMaxima}}`, 'g')) || [texto];
-    },
-
+    speakNext(); // Iniciar el habla con el primer fragmento
+  } else {
+    alert("Tu navegador no soporta síntesis de voz.");
+  }
+},
     // Detener cualquier síntesis de voz en curso
     detenerVozAsistente() {
       if (window.speechSynthesis.speaking) {
