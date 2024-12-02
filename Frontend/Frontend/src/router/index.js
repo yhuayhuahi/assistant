@@ -1,15 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import App from '../App.vue';
-import AsistentePsicologico from '../components/AsistentePsicologico.vue';
+import MicControl from '../components/MicControl.vue';
+import AsistentePsicologico from '../components/AsistentePsicologico.vue'; // Componente del asistente
 
 const routes = [
-  { path: '/', component: App }, // Ruta principal
-  { path: '/asistente', component: AsistentePsicologico }  // Ruta para el asistente psicológico
+  {
+    path: '/',
+    name: 'Inicio',
+    component: MicControl
+  },
+  {
+    path: '/asistente-psicologico',
+    name: 'AsistentePsicologico',
+    component: AsistentePsicologico
+  }
 ];
 
 const router = createRouter({
-  history: createWebHistory(),  // Usar historial de navegación
-  routes,
+  history: createWebHistory(),
+  routes
 });
 
 export default router;
