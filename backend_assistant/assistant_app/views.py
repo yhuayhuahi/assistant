@@ -305,6 +305,42 @@ def lenguaje_natural(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@api_view(['POST'])
+def assistant_psycology(request):
+    # Parsear el cuerpo de la solicitud
+    body = json.loads(request.body)
+    mensaje_usuario = body.get('mensaje')
+
+    if not mensaje_usuario:
+        return JsonResponse({'error': 'Mensaje no proporcionado'}, status=400)
+    
+    # Inicializar cliente de Cohere
+    co = ClientV2(API_KEY)
+    
+    contexto = 'Eres un asistente virtual de ayuda psicologica y/o emocional, responde a las siguientes preguntas de acuerdo a tu conocimiento y experiencia\n'
+    
+    # Crear el mensaje de entrada para el modelo
+    response = co.chat(
+        model="command-r-plus",
+        messages=[
+            {
+                "role": "user",
+                "content": contexto
+            },
+            {
+                "role": "assistant",
+                "content": "Entendido!"
+            },
+            {
+                "role": "user",
+                "content": mensaje_usuario
+            }
+        ]
+    )
+    
+    respuesta = response.message.content[0].text
+    return JsonResponse({'message': respuesta}, status=200)
+
 
 @api_view(['GET'])
 def api_overview(request):
