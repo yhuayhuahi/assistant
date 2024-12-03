@@ -307,7 +307,7 @@ def lenguaje_natural(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-def chat_psycology(request):
+def assistant_psycology(request):
     # Parsear el cuerpo de la solicitud
     body = json.loads(request.body)
     mensaje_usuario = body.get('mensaje')
@@ -318,11 +318,12 @@ def chat_psycology(request):
     # Inicializar cliente de Cohere
     co = ClientV2(API_KEY)
     
-    contexto = "Eres un asistente virtual de ayuda psycologica, responde como veas conveniente a las siguientes interacciones"
+    contexto = 'Eres un asistente virtual de ayuda psicologica y/o emocional, responde a las siguientes preguntas de acuerdo a tu conocimiento y experiencia\n'
     
+    # Crear el mensaje de entrada para el modelo
     response = co.chat(
-        model = "command-r-plus",
-        messages = [
+        model="command-r-plus",
+        messages=[
             {
                 "role": "user",
                 "content": contexto
@@ -337,11 +338,12 @@ def chat_psycology(request):
             }
         ]
     )
-    respuesta = response.message.content[0].text
     
-    return JsonResponse({"message": respuesta}, status=200)
-        
-@api_view(['GET', 'POST'])
+    respuesta = response.message.content[0].text
+    return JsonResponse({'message': respuesta}, status=200)
+
+
+@api_view(['GET'])
 def api_overview(request):
     return JsonResponse({"message": "Bienvenido a la API del asistente virtual, este es una ruta de prueba, para ver como se tipea la respuesta en la interfaz en nuestro frontend :3, continua diseñando"}, status=200)
 

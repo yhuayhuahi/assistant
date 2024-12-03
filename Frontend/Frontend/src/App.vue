@@ -1,109 +1,95 @@
 <template>
   <div id="app">
-    <h1>Asistente Virtual</h1>
-    <button @click="iniciarVoz">Hablar</button>
     
-    <div v-if="mensaje">
-      <h2>Texto del mensaje:</h2>
-      <p>{{ mensaje }}</p>
-    </div>
-
-    <button v-if="mensaje" @click="enviarMensaje">Enviar</button>
-
-    <div v-if="respuesta">
-      <h2>Respuesta del Asistente:</h2>
-      <p>{{ respuesta }}</p>
-    </div>
+    <router-view></router-view>
   </div>
 </template>
 
-<script>
-import axios from "axios";
-
-export default {
-  data() {
-    return {
-      mensaje: "",
-      respuesta: "",
-      reconocimiento: null,  // Para manejar el reconocimiento de voz
-    };
-  },
-  methods: {
-    // Iniciar la grabación de voz
-    iniciarVoz() {
-      if (!("webkitSpeechRecognition" in window)) {
-        alert("Tu navegador no soporta reconocimiento de voz.");
-        return;
-      }
-
-      // Crear una nueva instancia del reconocimiento de voz
-      this.reconocimiento = new webkitSpeechRecognition();
-      this.reconocimiento.continuous = false;  // Solo reconocer una vez
-      this.reconocimiento.lang = "es-ES";  // Configurar el idioma (en este caso, español)
-      this.reconocimiento.interimResults = false;  // Solo resultados finales
-
-      // Callback cuando se detecta el resultado
-      this.reconocimiento.onresult = (event) => {
-        const texto = event.results[0][0].transcript;
-        this.mensaje = texto;  // Establecer el mensaje con lo que se reconoció
-      };
-
-      // Callback para errores
-      this.reconocimiento.onerror = (event) => {
-        alert("Hubo un error con el reconocimiento de voz: " + event.error);
-      };
-
-      // Iniciar el reconocimiento de voz
-      this.reconocimiento.start();
-    },
-
-    // Enviar el mensaje al backend
-    async enviarMensaje() {
-      try {
-        const response = await axios.post("http://localhost:8000/api/front/", {
-          mensaje: this.mensaje,
-        });
-
-        // Manejar la respuesta del backend
-        if (response.data.message) {
-          this.respuesta = response.data.message;
-        } else if (response.data.error) {
-          this.respuesta = `Error: ${response.data.error}`;
-        }
-      } catch (error) {
-        console.error(error);
-        this.respuesta = "Hubo un error al procesar tu solicitud.";
-      }
-    },
-  },
-};
-</script>
-
 <style>
 #app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 80%;
+  max-width: 900px;
+  height: 100%;
+  background: linear-gradient(90deg, #ff007f, #7f00ff);
+  border: 5px solid #ff007f;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  color: white;
   text-align: center;
-  margin-top: 50px;
+  margin: 20px auto;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #ffeb3b;
 }
 
 button {
-  padding: 10px 20px;
-  background-color: #4caf50;
+  background: linear-gradient(45deg, #00ff7f, #00e5ff);
   color: white;
+  padding: 12px 30px;
   border: none;
+  border-radius: 30px;
+  font-size: 1.2rem;
   cursor: pointer;
+  margin: 10px 0;
+  transition: transform 0.3s ease, background 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 button:hover {
-  background-color: #45a049;
+  background: linear-gradient(45deg, #ff007f, #ff4500);
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
-h1, h2 {
-  font-size: 24px;
-  font-weight: bold;
+button[v-if="mensaje"] {
+  background: linear-gradient(45deg, #ff5722, #ff9100);
 }
 
-p {
-  font-size: 18px;
+button[v-if="mensaje"]:hover {
+  background: linear-gradient(45deg, #ff6a00, #e65100);
+}
+
+.message-box, .response-box {
+  background: linear-gradient(45deg, #ff00ff, #8000ff);
+  padding: 20px;
+  border-radius: 15px;
   margin-top: 20px;
+  text-align: left;
+  width: 85%;
+  max-width: 700px;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 30px;
 }
+
+.message-box h2, .response-box h2 {
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+  color: #fff700;
+  text-transform: uppercase;
+}
+
+.message-box p, .response-box p {
+  color: #e0e0e0;
+  font-size: 1.1rem;
+}
+
+.message-box, .response-box {
+  max-height: none; 
+  overflow: visible;
+}
+
 </style>
