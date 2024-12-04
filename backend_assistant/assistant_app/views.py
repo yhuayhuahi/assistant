@@ -157,14 +157,14 @@ def lenguaje_natural(request):
         contexto = {
             "role": "user",
             "content": (
-                "Eres un asistente virtual que puede realizar acciones de acuerdo a los comando que te mostrare, si algo coincide con algún comando no dudes, en caso de que no se pueda, puedes mandarle un mensaje de tu parte\n"
+                "Eres un asistente virtual que puede realizar acciones de acuerdo a los comandos que te mostrare, si algo coincide con algún comando no dudes, en caso de que no se pueda, puedes mandarle un mensaje de tu parte\n"
                 f"Tengo una lista de comandos disponibles:\n{', '.join(COMANDOS)}.\n"
                 f"El usuario dice: '{mensaje_usuario}'.\n"
                 "Identifica lo que el usuario quiere y devuelve lo siguiente:\n"
                 "- Si coincide con un comando, responde con {'accion': '<comando>', 'contenido': '<mensaje>'}.\n"
                 "- Si lo que quiere no coincide con un comando, talvez quiere algo que tu puedes hacer como dar informacion de algo en ese caso: {'accion': 'self', 'contenido': '<mensaje>'}.\n"
-                "- Si el usuario quiere guardar una tarea, responde con {'accion': 'guardar tarea', 'contenido': '<nombre de la tarea>', 'fecha': 'AAAA-MM-DD'}.\n"
-                "- Si no mensionan año asume el año 2024.\n"
+                "- Si el usuario quiere guardar una tarea, tambien envia la fecha dentro del contenido\n"
+                "- Si no mensionan el de la tarea año, asume el año 2024.\n"
             )
         }
 
@@ -174,12 +174,11 @@ def lenguaje_natural(request):
             messages=[contexto]
         )
         
-        # Extraer y limpiar la respuesta del modelo
-        respuesta = response.message.content[0].text.strip()
+        respuesta = response.message.content[0].text
         print(respuesta)
-
-        # Usar una expresión regular para extraer los atributos 'accion' y 'contenido' (y 'fecha' si es necesario)
-        pattern = r"'\s*[aá]ccion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'(?:\s*,\s*'fecha'\s*:\s*'([^']+)')?"
+        
+        # Usar una expresión regular para extraer los atributos 'accion' y 'contenido'
+        pattern = r"'\s*accion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'"
 
         match = re.search(pattern, respuesta)
 
@@ -189,13 +188,44 @@ def lenguaje_natural(request):
         # Obtener los valores de los grupos
         accion = match.group(1)
         contenido = match.group(2)
-        fecha = match.group(3) if match.group(3) else None  # Si 'fecha' no está presente, lo dejamos como None
 
         # Lógica para manejar la respuesta
         client = APIClient()
-        if accion == 'guardar tarea' and fecha:
+        if accion == 'guardar tarea':
+            
+            # Extraer la fecha de la tarea
+            contexto_sin_pretexto = (
+                "Eres un asistente virtual. Debes estructurar la siguiente tarea recien creada o añadida\n"
+                f"La tarea es {contenido}.\n"
+                "En caso de que no se mensione el año, asume el año 2024.\n"
+                "Por favor, proporciona la tarea y fecha proporcionada en el siguiente formato: {'tarea': '<contenido>', 'fecha': 'YYYY-MM-DD'}.\n"
+            )
+            
+            response_temp = co.chat(
+                model="command-r-plus",
+                messages=[{
+                    "role": "user",
+                    "content": contexto_sin_pretexto
+                }]
+            )
+            
+            respuesta_temp = response_temp.message.content[0].text
+            print(respuesta_temp)
+            
+            # Usar una expresión regular para extraer los atributos 'accion' y 'contenido'
+            pattern = r"'\s*tarea'\s*:\s*'([^']+)'\s*,\s*'fecha'\s*:\s*'([^']+)'"
+
+            match = re.search(pattern, respuesta_temp)
+
+            if not match:
+                return JsonResponse({'error': 'No se pudo extraer la información necesaria para guardar la tarea'}, status=500)
+            
+            # Obtener los valores de los grupos
+            tarea = match.group(1)
+            fecha = match.group(2)
+            
             # Crear una tarea mediante la API
-            response = client.post('/api/tareas/', {'usuario': 1, 'nombre': contenido, 'fecha_planificada': fecha})
+            response = client.post('/api/tareas/', {'usuario': 1, 'nombre': tarea, 'fecha_planificada': fecha})
             response_data = response.json()  # Convertir la respuesta a JSON
 
             try:
