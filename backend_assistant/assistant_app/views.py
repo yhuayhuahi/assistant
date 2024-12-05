@@ -178,7 +178,7 @@ def lenguaje_natural(request):
         print(respuesta)
         
         # Usar una expresión regular para extraer los atributos 'accion' y 'contenido'
-        pattern = r"'\s*accion'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'"
+        pattern = r"'\s*acci[oó]n'\s*:\s*'([^']+)'\s*,\s*'contenido'\s*:\s*'([^']+)'"
 
         match = re.search(pattern, respuesta)
 
