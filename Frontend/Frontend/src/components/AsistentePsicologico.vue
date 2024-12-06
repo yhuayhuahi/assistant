@@ -1,6 +1,6 @@
 <template>
   <div class="asistente-container">
-    <h2>Asistente Psicológico</h2>
+    <h2>Asistente de Ayuda Psicológica</h2>
 
     <!-- Botón para activar o desactivar el micrófono -->
     <button @click="toggleMic">{{ isMicOn ? 'Apagar Micrófono' : 'Activar Micrófono' }}</button>
@@ -13,7 +13,9 @@
       <!-- Botón para enviar el mensaje capturado al backend -->
       <button @click="enviarMensaje(mensajeCapturado)">Enviar al Asistente</button>
     </div>
-
+    <div v-if="cargando" class="loading-box">
+      <p>Cargando solicitud...</p>
+    </div>
     <!-- Mostrar la respuesta del asistente -->
     <div v-if="respuesta">
       <button @click="detenerVozAsistente" :disabled="!isSpeaking">Detener Voz</button>
@@ -35,8 +37,17 @@ export default {
       micStatus: 'Micrófono apagado', // Estado del micrófono
       isMicOn: false, // Estado del micrófono (encendido o apagado)
       isSpeaking: false, // Variable para saber si el asistente está hablando
+      cargando: false,
     };
   },
+  computed: {
+  micStatusStyle() {
+    return {
+      color: this.isMicOn ? '#ff7043' : '#d32f2f',
+      fontWeight: 'bold', 
+    };
+  }
+},
   methods: {
     // Iniciar o continuar el reconocimiento de voz
     iniciarVoz() {
@@ -95,6 +106,7 @@ export default {
 
     // Enviar mensaje al backend
     async enviarMensaje(mensaje) {
+      this.cargando = true;
       if (!mensaje.trim()) return;  // No enviar si el mensaje está vacío
 
       try {
@@ -108,6 +120,8 @@ export default {
         console.error('Error al comunicarse con el asistente:', error);
         this.respuesta = 'Ocurrió un error. Por favor, inténtalo de nuevo.';
         this.hablar(this.respuesta);
+      } finally {
+        this.cargando = false; // Ocultar caja de carga
       }
     },
 
@@ -184,7 +198,8 @@ h3 {
 
 p {
   font-size: 18px;
-  color: #333;
+  color: white;
+  text-align: center;
 }
 
 button:disabled {
