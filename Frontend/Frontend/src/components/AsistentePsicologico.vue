@@ -6,21 +6,21 @@
     <button @click="toggleMic">{{ isMicOn ? 'Apagar Micrófono' : 'Activar Micrófono' }}</button>
 
     <!-- Mostrar el mensaje capturado por el micrófono antes de enviarlo -->
-    <div v-if="mensajeCapturado">
-      <h3>Mensaje Capturado:</h3>
+    <div v-if="mensajeCapturado" class="message-box">
+      <h2>Mensaje Capturado:</h2>
       <p>{{ mensajeCapturado }}</p>
-
+    </div>
       <!-- Botón para enviar el mensaje capturado al backend -->
       <button @click="enviarMensaje(mensajeCapturado)">Enviar al Asistente</button>
-    </div>
     <div v-if="cargando" class="loading-box">
       <p>Cargando solicitud...</p>
     </div>
     <!-- Mostrar la respuesta del asistente -->
     <div v-if="respuesta">
-      <button @click="detenerVozAsistente" :disabled="!isSpeaking">Detener Voz</button>
       <h3>Respuesta del Asistente:</h3>
-      <p>{{ respuesta }}</p>
+      <div class="response-box">
+        <p>{{ respuesta }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -55,12 +55,10 @@ export default {
         alert('Tu navegador no soporta reconocimiento de voz.');
         return;
       }
-
       if (this.reconocimiento) {
         this.reconocimiento.stop();  // Detener si ya está activo
         this.reconocimiento = null;  // Reiniciar la instancia de reconocimiento
       }
-
       this.reconocimiento = new webkitSpeechRecognition();
       this.reconocimiento.continuous = true;  // Mantener el micrófono encendido
       this.reconocimiento.lang = 'es-ES';
@@ -69,18 +67,15 @@ export default {
         const texto = event.results[0][0].transcript;
         this.mensajeCapturado = texto;  // Mostrar el mensaje capturado
       };
-
       this.reconocimiento.onerror = (event) => {
         console.error('Error de reconocimiento: ', event.error);
         this.detenerVoz();
       };
-
       this.reconocimiento.onend = () => {
         if (this.isMicOn) {
           this.reconocimiento.start();  // Reiniciar el reconocimiento si se detiene.
         }
       };
-
       this.reconocimiento.start();
       this.micStatus = 'Escuchando...';
     },
@@ -130,13 +125,10 @@ export default {
   if ("speechSynthesis" in window) {
     // Cancelamos cualquier síntesis de voz en curso
     window.speechSynthesis.cancel();
-
     // Dividimos el texto en fragmentos más pequeños
     const maxLength = 200;
     const speechArray = texto.match(new RegExp(`.{1,${maxLength}}`, "g")) || [texto];
-
     let index = 0;
-
     const speakNext = () => {
       if (index < speechArray.length) {
         const speech = new SpeechSynthesisUtterance(speechArray[index]);
@@ -144,20 +136,16 @@ export default {
         speech.pitch = 1;
         speech.rate = 0.9;
         speech.volume = 1;
-
         speech.onend = () => {
           index++;
           speakNext(); // Hablar el siguiente fragmento
         };
-
         speech.onerror = (e) => {
           console.error("Error en síntesis:", e);
         };
-
         window.speechSynthesis.speak(speech);
       }
     };
-
     speakNext(); // Iniciar el habla con el primer fragmento
   } else {
     alert("Tu navegador no soporta síntesis de voz.");
@@ -206,4 +194,5 @@ button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
 </style>
